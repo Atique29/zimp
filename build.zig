@@ -4,14 +4,20 @@ pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
-    const img_mod = b.addModule("img_loader", .{
-        .root_source_file = b.path("src/img_loader.zig"),
-        .target = target,
+    const core_mod = b.addModule("core", .{
+        .root_source_file = b.path("src/root.zig"),
+    });
+
+    const image_io_mod = b.addModule("image_io", .{
+        .root_source_file = b.path("src/image_io.zig"),
+        .imports = &.{
+            .{ .name = "core", .module=core_mod},
+        }
     });
 
     //point to stb files
-    img_mod.addIncludePath(b.path("src/"));
-    img_mod.addCSourceFile(.{
+    image_io_mod.addIncludePath(b.path("src/"));
+    image_io_mod.addCSourceFile(.{
         .file = b.path("src/stb/test.c"),
         .flags = &[_][]const u8{
             "-std=c11", 
@@ -20,7 +26,7 @@ pub fn build(b: *std.Build) void {
     });
 
     const exe = b.addExecutable(.{
-        .name = "imzg",
+        .name = "zimp",
         .root_module = b.createModule(.{
             
             .root_source_file = b.path("src/main.zig"),
@@ -31,7 +37,8 @@ pub fn build(b: *std.Build) void {
             .link_libc = true, //NEW WAY TO LINK LIBC, FORGET OLD TUTORIALSS!!
             
             .imports = &.{
-                .{ .name = "img_loader", .module = img_mod },
+                .{ .name = "image_io", .module = image_io_mod },
+                .{ .name = "core", .module = core_mod },
             },
         }),
     });

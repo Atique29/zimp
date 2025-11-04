@@ -1,20 +1,42 @@
 const std = @import("std");
-const imgz = @import("img_loader");
+const image_io = @import("image_io");
 
 pub fn main() !void {
-    var stdout_buffer: [1024]u8 = undefined;
-    var stdout_writer = std.fs.File.stdout().writer(&stdout_buffer);
-    const stdout = &stdout_writer.interface;
+    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    const allocator = gpa.allocator();
+    defer {
 
-    const desired_channel: u8 = 1; //grey_scale
-    const img_data = try imgz.load_img("src/stb/char.jpg", desired_channel);
+        const deinit_status = gpa.deinit();
+        if (deinit_status == .leak) @panic("Memory leak!!!");
+        }
 
-    for (img_data) |pixel_val| {
-        try stdout.print("{d} ", .{pixel_val});
-    }
+    const desired_channel: u8 = 1; //1 for grey_scale
+    const img = try image_io.load_img(allocator, "test/eeprom.jpg", desired_channel);
+    // std.debug.print("Img:{any} \n", .{img});
 
-    try stdout.print("\n", .{});
-    try stdout.flush();
+
+    // implement an image thats described by cos(2x+y)
+    // (x,y) being the pixel coordinate
+
+
+    
+    // const img_width: u8 = 128;
+    // const img_height: u8 = 128;
+    // const img_data_len: usize = img_height * img_width;
+    // const data = [_] u8 {0} ** img_data_len; //basically duplecating single value array 
+                                             //to make a buffer for array 
+    //
+    // std.debug.print("{any}", .{data});
+
+
+
+
+
+
+    try image_io.write(img, "test/written.png");
+
+    // img.deinit();
+
 
 
 }
