@@ -33,9 +33,9 @@ pub fn main() !void {
 
 
 
-    try image_io.write(img, "test/written.png");
+    try image_io.write_img(img, "test/written7.png");
 
-    // img.deinit();
+    img.deinit();
 
 
 

@@ -5,7 +5,7 @@ pub fn build(b: *std.Build) void {
     const optimize = b.standardOptimizeOption(.{});
 
     const core_mod = b.addModule("core", .{
-        .root_source_file = b.path("src/root.zig"),
+        .root_source_file = b.path("src/core.zig"),
     });
 
     const image_io_mod = b.addModule("image_io", .{
