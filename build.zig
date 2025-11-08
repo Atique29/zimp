@@ -25,6 +25,14 @@ pub fn build(b: *std.Build) void {
         }, 
     });
 
+    const fun_mod = b.addModule("fun", .{
+        .root_source_file = b.path("src/fun.zig"),
+        .imports = &.{
+            .{ .name = "core", .module=core_mod},
+        }
+    });
+
+
     const exe = b.addExecutable(.{
         .name = "zimp",
         .root_module = b.createModule(.{
@@ -39,6 +47,7 @@ pub fn build(b: *std.Build) void {
             .imports = &.{
                 .{ .name = "image_io", .module = image_io_mod },
                 .{ .name = "core", .module = core_mod },
+                .{ .name = "fun", .module = fun_mod },
             },
         }),
     });
