@@ -8,7 +8,7 @@ const Image = core.Image;
 /// takes a pointer to an Image struct and fills its pixel data with cosine (x^2 + y^2),
 /// where x,y are normalized to 0 -- 2 * pi 
 
-pub fn radial_cosine(image: *Image) !void {
+pub fn radial_cosine(image: *Image) void {
 
     const pi = std.math.pi;
     // const width_f = @as(f32, image.width);  //why these work but x_f = @as(f32, x) fail below?

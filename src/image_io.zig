@@ -13,6 +13,7 @@ const c = @cImport({
 
 
 ///function to load an image
+///set desired_channels to 0 for loading all available channels in the image
 pub fn load_img(allocator: std.mem.Allocator, image_path: [*c]const u8, desired_channels: u8 ) !Image {
 
     std.log.info("Loading image...\n", .{});
@@ -42,6 +43,7 @@ pub fn load_img(allocator: std.mem.Allocator, image_path: [*c]const u8, desired_
 
     //figure out how many channels were loaded
     //if desired_channel is set to 0; stbi_load loads all channels available in the image
+    //this is how if can be used in zig to implement C's .. I forgot what : is called
     const loaded_channels: u8 = if (desired_channels == 0) @intCast(orig_channels) else desired_channels;
 
     std.log.info("Image loaded successfully!\n", .{});
@@ -61,21 +63,25 @@ pub fn load_img(allocator: std.mem.Allocator, image_path: [*c]const u8, desired_
     //converting c array (data) to zig slice
     const img_data: []u8 = data[0..img_size];
 
-    //allocating memory and saving the data in it for main
-    const allocated_img_data = try allocator.alloc(u8, img_size);
-    @memcpy(allocated_img_data, img_data);
+    // not doing this anymore! allocation is embedded in the image init()
+    // allocating memory and saving the data in it for main
+    // const allocated_img_data = try allocator.alloc(u8, img_size);
+    // @memcpy(allocated_img_data, img_data);
+
+    // create an image object and pass the everything from stb to it
+    const img = try Image.init(allocator, z_width, z_height, loaded_channels); 
+    //set the data
+    //just look at this noob mistake :)
+    // img.data = img_data;-->just copies img_data.ptr,len to img.data
+    // so its pointing to the same data- which is getting freed by stb_image_free
+    // need to use memmove to write directly to allocated memory
+    @memmove(img.data, img_data);
+
 
 
     std.log.info("Parsed successfully!\n", .{});
 
-    return Image {
-        .data = allocated_img_data,
-        .width = @intCast(width),
-        .height = @intCast(height),
-        .channels = @intCast(loaded_channels), 
-        .allocator = allocator,
-    };
-
+    return img;
 
 }
 
