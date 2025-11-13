@@ -1,7 +1,7 @@
 const std = @import("std");
 
 const core = @import("core");
-const fun = @import("fun");
+const toolbox = @import("toolbox");
 const image_io = @import("image_io");
 
 pub fn main() !void {
@@ -14,11 +14,13 @@ pub fn main() !void {
         }
 
 
-    const desired_channel: u8 = 0; //1 for grey_scale
-    const img = try image_io.load_img(allocator, "test/eeprom.jpg", desired_channel);
+    const desired_channel: u8 = 0; //1 for grey_scale, 0 for all channels
+    var img = try image_io.load_img(allocator, "test/char.jpg", desired_channel);
     defer img.deinit(); 
 
-    try image_io.write_img(img, "test/final_cos^2y^2_cont_48.png");
+    try toolbox.mirror_x(&img);
+
+    try image_io.write_img(img, "test/char_mirror_x.png");
 
 
 

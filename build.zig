@@ -32,6 +32,12 @@ pub fn build(b: *std.Build) void {
         }
     });
 
+    const toolbox_mod = b.addModule("toolbox", .{
+        .root_source_file = b.path("src/toolbox.zig"),
+        .imports = &.{
+            .{ .name = "core", .module=core_mod},
+        }
+    });
 
     const exe = b.addExecutable(.{
         .name = "zimp",
@@ -48,6 +54,7 @@ pub fn build(b: *std.Build) void {
                 .{ .name = "image_io", .module = image_io_mod },
                 .{ .name = "core", .module = core_mod },
                 .{ .name = "fun", .module = fun_mod },
+                .{ .name = "toolbox", .module = toolbox_mod },
             },
         }),
     });
@@ -66,6 +73,37 @@ pub fn build(b: *std.Build) void {
     if (b.args) |args| {
         run_cmd.addArgs(args);
     }
+
+    //add tests
+    const main_tests =b.addTest(.{
+        .root_module = exe.root_module,
+    });
+
+    //run step for running this test
+    const run_main_tests = b.addRunArtifact(main_tests);
+
+    //top level step to run all test
+    const test_step = b.step("test", "run tests");
+    test_step.dependOn(&run_main_tests.step);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     
 }

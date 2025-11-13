@@ -5,7 +5,7 @@ const std = @import("std");
 //IMPLEMENT ERRORS!!
 
 
-/// image data struct
+/// Image data struct
 pub const Image = struct {
     allocator: std.mem.Allocator,
     data: []u8,
@@ -46,4 +46,81 @@ pub const Image = struct {
         // }
     }
 
+    /// Get pixel information at (x,y).
+    /// Takes (x,y) and returns a slice containing the pixel.
+    /// The slice just points to the pixel at (x,y) in self.data
+    pub fn get_pixel(self: Image, x: usize, y: usize) ![]u8 {
+
+        //for RGB, a pixel is a set of 3 values
+        //for RGBA, its a set of four values
+        //so we need to account for the number of channels 
+        //in order to find the right pixel in self.data
+        //which is a one dimensional representation of data
+        
+        //check that the boundaries are respected
+        if (x >= self.width or y >= self.height) {
+            std.log.err("The requested pixel at ({d},{d}) doesn't exist," ++
+            " i.e; the coordinates are out of bounds. The final pixel of the image is at ({d}, {d}) ",
+            .{x, y, self.width - 1, self.height - 1 });
+            return error.GetPixelOutOfBounds;
+        }
+
+        const pixel_start: usize = ((y * self.width) + x) * self.channels ;  
+        //not subtracting 1 because slice indexing is exclusive 
+        const pixel_end: usize = pixel_start + self.channels;
+        return self.data[pixel_start..pixel_end];
+
+    } 
+
+    /// Set pixel at (x,y).
+    /// Takes a slice and a coordinate.
+    /// Writes the contents pointed by the slice to self.data
+    /// at the given coordinates.
+    pub fn set_pixel(self: *Image, pixel_vals: []const u8, x: usize, y: usize) !void {
+        // self: *Image, not Image, because this methods gonna modify the data field
+        // of self. So we pass self as reference, explicitly. Dropping * does work
+        // here tho, owing to data being a slice.
+
+        //check that the boundaries are respected
+        if (x >= self.width or y >= self.height) {
+            std.log.err("get_pixel: Cant write to pixel at ({d},{d})," ++
+            " the coordinates are out of bounds. The final pixel of the image is at ({d}, {d}) ",
+            .{x, y, self.width - 1, self.height - 1 });
+            return error.GetPixelOutOfBounds;
+        }
+
+        //check that pixel_vals contains the values for each channel
+        if (pixel_vals.len != self.channels) {
+            std.log.err("set_pixel: Input data length ({d}) does not match image channels ({d})", .{
+                pixel_vals.len, self.channels,
+            });
+            return error.PixelLengthMismatch;
+        }
+
+        const pixel_start: usize = ((y * self.width) + x) * self.channels ;  
+        const pixel_end: usize = pixel_start + self.channels;
+
+        const dest_slice = self.data[pixel_start..pixel_end];
+        //using @memmove instead of @memcpy because it seems
+        //more general to do so. Some tools may require src and
+        //dest to overlap
+        @memmove(dest_slice, pixel_vals);
+
+    }
+
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
