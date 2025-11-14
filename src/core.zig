@@ -4,6 +4,13 @@ const std = @import("std");
 
 //IMPLEMENT ERRORS!!
 
+/// Region of Interest (ROI) struct 
+pub const Rect = struct {
+     x: usize,
+     y: usize,
+     width: usize,
+     height: usize,
+};
 
 /// Image data struct
 pub const Image = struct {
@@ -23,12 +30,13 @@ pub const Image = struct {
     ) !Image {
         //make allocation part of the init process
         //this make sense because:
-        // 1. calling init() should completely setup the image object
+        // 1. calling Image.init() should completely setup the image object
         // 2. if allocation for data is done else where (e.g, main),
         //    free() would have to be called explicitly there.
-        //    Then, if I call deinit(), i am calling free on data
+        //    Then, if I call Image.deinit(), i am calling free on data
         //    thats already been freed, leading to error
-        const data = try allocator.alloc(u8, width * height * channels);
+        const data: []u8 = try allocator.alloc(u8, width * height * channels);
+        @memset(data, 0); //initiate the image with 0's
         return Image {
                 .allocator = allocator,
                 .data = data,

@@ -12,8 +12,8 @@ const c = @cImport({
 });
 
 
-///function to load an image
-///set desired_channels to 0 for loading all available channels in the image
+/// Function to load an image.
+/// Set desired_channels to 0 for loading all available channels in the image
 pub fn load_img(allocator: std.mem.Allocator, image_path: [*c]const u8, desired_channels: u8 ) !Image {
 
     std.log.info("Loading image...\n", .{});
@@ -21,7 +21,6 @@ pub fn load_img(allocator: std.mem.Allocator, image_path: [*c]const u8, desired_
     var width: c_int = 0;
     var height: c_int = 0;
     var orig_channels: c_int = 0;
-    // const desired_channels: c_int = 1;
 
     const data = c.stbi_load(
         image_path,

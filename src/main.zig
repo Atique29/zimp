@@ -18,9 +18,22 @@ pub fn main() !void {
     var img = try image_io.load_img(allocator, "test/char.jpg", desired_channel);
     defer img.deinit(); 
 
-    try toolbox.mirror_x(&img);
+    const roi = core.Rect {
+        .x = 0,
+        .y = 0,
+        .width = 20,
+        .height = 32,
+    };
+    
+    var img2 = try core.Image.init(allocator, roi.width, roi.height, img.channels);
+    defer img2.deinit(); 
 
-    try image_io.write_img(img, "test/char_mirror_x.png");
+    try toolbox.crop(&img2, &img, roi);
+
+    try toolbox.invert(&img2);
+
+
+    try image_io.write_img(img2, "test/char_crop.jpg");
 
 
 
