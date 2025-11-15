@@ -154,20 +154,29 @@ pub fn crop(dest_image: *Image, src_image: *Image, roi: Rect) !void {
     }
 
     //copy the ROI pixels from src to dest 
+    //here y = 0 is the first row of dest_image
+    //copy one row of ROI at a time
     var y: usize = 0;
     while (y < roi.height): (y+=1) {
-        var x: usize = 0;
-        while (x < roi.width): (x+=1) {
 
-            //get the pixel from src image
-            const src_pixel_val: []u8 = try src_image.get_pixel(roi.x + x, roi.y + y);
+        //get the index of the start and end pixel of the ROI row in src_image.data
+        const src_y: usize = y + roi.y;
+        const src_start_index: usize = (src_y * src_image.width + roi.x) * src_image.channels;
+        const src_end_index: usize = src_start_index + roi.width * src_image.channels;
+        const row_data: [] u8 = src_image.data[src_start_index..src_end_index];
+
+        //get the index of the start and end pixel of the ROI row in dest_image.data
+        //start with the first element of each row (x = 0)
+        const dest_start_index: usize = (y * dest_image.width) * dest_image.channels; 
+        const dest_end_index:  usize = dest_start_index + dest_image.width * dest_image.channels;
+        @memcpy(dest_image.data[dest_start_index..dest_end_index], row_data);
+
+
             
-            //set the pixel in dest image
-            try dest_image.set_pixel(src_pixel_val, x, y);
 
-        }
     }
 }
+
 
 
 
