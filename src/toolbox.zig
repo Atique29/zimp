@@ -24,8 +24,8 @@ pub fn mirror_x(image: *Image) !void {
 
             // horizontal swapping
             // x <-> w - x - 1 
-            const pixel_right: []u8 = try image.get_pixel( image.width - x - 1 , y);
-            const pixel_left: []u8 = try image.get_pixel(x,y);
+            const pixel_right: []u8 = image.get_pixel( image.width - x - 1 , y).?;
+            const pixel_left: []u8 = image.get_pixel(x,y).?;
 
             @memcpy(temp_pixel, pixel_right);
 
@@ -64,8 +64,8 @@ pub fn mirror_y(image: *Image) !void {
 
             // vertical swapping
             // y <-> w - y - 1 
-            const pixel_bottom: []u8 = try image.get_pixel( x, image.height - y - 1);
-            const pixel_top: []u8 = try image.get_pixel(x,y);
+            const pixel_bottom: []u8 = image.get_pixel( x, image.height - y - 1).?;
+            const pixel_top: []u8 = image.get_pixel(x,y).?;
 
             @memcpy(temp_pixel, pixel_bottom);
 
@@ -91,11 +91,11 @@ pub fn mirror_xy(image: *Image) !void {
 
             // x <-> w - x - 1 
             // y <-> w - y - 1 
-            const pixel_bottom: []u8 = try image.get_pixel( 
+            const pixel_bottom: []u8 = image.get_pixel( 
                 image.width - x - 1,
                 image.height - y - 1
-            );
-            const pixel_top: []u8 = try image.get_pixel(x,y);
+            ).?;
+            const pixel_top: []u8 = image.get_pixel(x,y).?;
 
             @memcpy(temp_pixel, pixel_bottom);
 
@@ -119,7 +119,7 @@ pub fn invert(image: *Image) !void {
 
             //this slice directly points to the pixel in image.data
             //so we can just iterate over its pointer to modify the pixel
-            const pixel_val: []u8 = try image.get_pixel(x, y);
+            const pixel_val: []u8 = image.get_pixel(x, y).?;
             for (pixel_val) |*val| {
                 val.* = 255 - val.*;
             }
@@ -128,11 +128,13 @@ pub fn invert(image: *Image) !void {
 }
 
 
-/// Takes an Image and a Region of Interest (ROI) Rect struct,
+/// Takes source, destination Image structs and a Region of Interest (ROI) Rect struct,
 /// crops the image according to the ROI
 pub fn crop(dest_image: *Image, src_image: *Image, roi: Rect) !void {
     // this function needs a dest_image parameter unlike the ones above
-    // due to the allocated memory for src_image 
+    // cuz i am not sure about changing the width and height of source image
+    // if i did that, what about the memory allocated for the src image? its larger than 
+    // the memory required for the cropped image. Seems wasteful
     
     //check if roi is within bounds
     if ((roi.x + roi.width > src_image.width) or (roi.y + roi.height > src_image.height)) {
@@ -169,33 +171,86 @@ pub fn crop(dest_image: *Image, src_image: *Image, roi: Rect) !void {
         //start with the first element of each row (x = 0)
         const dest_start_index: usize = (y * dest_image.width) * dest_image.channels; 
         const dest_end_index:  usize = dest_start_index + dest_image.width * dest_image.channels;
+        //copy the data
         @memcpy(dest_image.data[dest_start_index..dest_end_index], row_data);
-
-
-            
 
     }
 }
 
+///Takes an Image struct and copies the content
+pub fn copy(dest_image: *Image, src_image: *Image) !void {
+    //use crop to copy 
+    //ROI is the whole src_image
+    try crop(dest_image, src_image, .{
+        .x = 0,
+        .y = 0,
+        .width = src_image.width,
+        .height = src_image.height,
+    });
+}
+
+/// Takes an RGB source image and converts to grayscale
+pub fn rgb2gray(src_image: *Image, dest_image: *Image)!void {
+    
+    //check that properties of src_image are correct
+    if (src_image.channels < 3){
+        std.log.err("rgb2gray: Number of channels of the source image must be " ++
+        "greated than 3. Given image has {d} channels.", .{src_image.channels});
+    }
+    //check that properties of dest_image are correct
+    if (dest_image.channels != 1){
+        std.log.err("rgb2gray: Number of channels of the destination image is " ++
+        "{d} instead of being 1", .{dest_image.channels});
+        return error.DestChannelError;
+    }
+
+    if (dest_image.width != src_image.width){
+        std.log.err("rgb2gray: Width of the destination image ({d}) doesn't " ++
+        "match the width of source image ({d})", .{dest_image.width, src_image.width});
+        return error.DestWidthError;
+    }
+
+    if (dest_image.height != src_image.height){
+        std.log.err("rgb2gray: Height of the destination image ({d}) doesn't " ++
+        "match the height of source image ({d})", .{dest_image.height, src_image.height});
+        return error.DestWidthError;
+    }
+
+    var y: usize = 0;
+    while (y < src_image.height): (y+=1) {
+        var x: usize = 0;
+        while (x < src_image.width): (x+=1) {
+
+            const pixel_val: []u8 = src_image.get_pixel(x, y).?;
+
+            //formula for conversion: ITU-R BT.709 : 0.2126 * R + 0.7152 * G + 0.0722 * B
+            const grayscale_pixel_val: f32 = 0.2126 * @as(f32, @floatFromInt(pixel_val[0])) + 
+                                            0.7152 * @as(f32, @floatFromInt(pixel_val[1])) +
+                                            0.0722 * @as(f32, @floatFromInt(pixel_val[2]));
+
+            const grayscale_pixel_val_u8 = @as(u8, @intFromFloat(grayscale_pixel_val));
+
+            // wrap this single value with in an array 
+            // so that zig can coerce it into a slice for the set_pixel function 
+            // when a pointer of the array is passed (with &)
+        
+            const grayscale_pixel_val_u8_array = [_]u8 {grayscale_pixel_val_u8};
+
+            try dest_image.set_pixel(&grayscale_pixel_val_u8_array, x, y);
+
+
+        }
+    }
 
 
 
 
 
 
+    
 
 
-
-
-
-
-
-
-
-
-
-
-
+}
 
 
 

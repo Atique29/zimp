@@ -55,9 +55,10 @@ pub const Image = struct {
     }
 
     /// Get pixel information at (x,y).
-    /// Takes (x,y) and returns a slice containing the pixel.
-    /// The slice just points to the pixel at (x,y) in self.data
-    pub fn get_pixel(self: Image, x: usize, y: usize) ![]u8 {
+    /// Takes (x,y) and returns a slice containing the pixel or null if x or y 
+    ///out of bounds.
+    /// The slice points to the pixel at (x,y) in self.data
+    pub fn get_pixel(self: Image, x: usize, y: usize) ?[]u8 {
 
         //for RGB, a pixel is a set of 3 values
         //for RGBA, its a set of four values
@@ -65,12 +66,9 @@ pub const Image = struct {
         //in order to find the right pixel in self.data
         //which is a one dimensional representation of data
         
-        //check that the boundaries are respected
+        //if out of bounds, return null
         if (x >= self.width or y >= self.height) {
-            std.log.err("The requested pixel at ({d},{d}) doesn't exist," ++
-            " i.e; the coordinates are out of bounds. The final pixel of the image is at ({d}, {d}) ",
-            .{x, y, self.width - 1, self.height - 1 });
-            return error.GetPixelOutOfBounds;
+            return null;
         }
 
         const pixel_start: usize = ((y * self.width) + x) * self.channels ;  
