@@ -39,6 +39,13 @@ pub fn build(b: *std.Build) void {
         }
     });
 
+    const filter_mod = b.addModule("filter", .{
+        .root_source_file = b.path("src/filters.zig"),
+        .imports = &.{
+            .{ .name = "core", .module=core_mod},
+        }
+    });
+
     const exe = b.addExecutable(.{
         .name = "zimp",
         .root_module = b.createModule(.{
@@ -55,6 +62,7 @@ pub fn build(b: *std.Build) void {
                 .{ .name = "core", .module = core_mod },
                 .{ .name = "fun", .module = fun_mod },
                 .{ .name = "toolbox", .module = toolbox_mod },
+                .{ .name = "filter", .module = filter_mod },
             },
         }),
     });

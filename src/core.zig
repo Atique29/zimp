@@ -58,7 +58,7 @@ pub const Image = struct {
     /// Takes (x,y) and returns a slice containing the pixel or null if x or y 
     ///out of bounds.
     /// The slice points to the pixel at (x,y) in self.data
-    pub fn get_pixel(self: Image, x: usize, y: usize) ?[]u8 {
+    pub fn get_pixel(self: Image, x: i64, y: i64) ?[]u8 {
 
         //for RGB, a pixel is a set of 3 values
         //for RGBA, its a set of four values
@@ -67,11 +67,13 @@ pub const Image = struct {
         //which is a one dimensional representation of data
         
         //if out of bounds, return null
-        if (x >= self.width or y >= self.height) {
+        //for negative x,y: @as(u64,@bitCast) turns them into huge numbers and the ">= width/heigt"
+        //check does the job
+        if (@as(u64, @bitCast(x)) >= self.width or @as(u64, @bitCast(y)) >= self.height) {
             return null;
         }
 
-        const pixel_start: usize = ((y * self.width) + x) * self.channels ;  
+        const pixel_start: usize = ((@as(usize, @intCast(y)) * self.width) + @as(usize, @intCast(x))) * self.channels ;  
         //not subtracting 1 because slice indexing is exclusive 
         const pixel_end: usize = pixel_start + self.channels;
         return self.data[pixel_start..pixel_end];
